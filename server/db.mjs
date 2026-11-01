@@ -190,7 +190,7 @@ export function obterRegrasCalculoCliente(cli = {}, configs = null) {
   const contasValidas = [c1, c2, c3].filter(v => v !== null);
 
   let tarifaNeo = toNullableFloat(cli?.tarifa_neoenergia);
-  if (!tarifaNeo && contasValidas.length > 0) {
+  if (contasValidas.length > 0) {
     const soma = contasValidas.reduce((acc, n) => acc + n, 0);
     tarifaNeo = Number((soma / contasValidas.length).toFixed(4));
   }
@@ -198,10 +198,7 @@ export function obterRegrasCalculoCliente(cli = {}, configs = null) {
     tarifaNeo = Number(cfg.tarifa_neoenergia || 1.11);
   }
 
-  const tarifaTac =
-    toNullableFloat(cli?.tarifa_tacticus) ??
-    toNullableFloat(cli?.tarifa_personalizada) ??
-    Number(cfg.tarifa_tacticus || 0.90);
+  const tarifaTac = Number((tarifaNeo * 0.8).toFixed(4));
 
   const baseCalculo = cli?.base_calculo || cfg.base_calculo || 'energia_consumida';
   const chavePix = String(cli?.chave_pix || cfg.chave_pix || 'contato@renatofeijo.com.br').trim();
@@ -257,11 +254,7 @@ export function salvarCliente(cliente) {
     tarifaNeo = existente?.tarifa_neoenergia ?? Number(cfg.tarifa_neoenergia || 1.11);
   }
 
-  const tarifaTac =
-    toNullableFloat(cliente.tarifa_tacticus) ??
-    toNullableFloat(cliente.tarifa_personalizada) ??
-    existente?.tarifa_tacticus ??
-    Number(cfg.tarifa_tacticus || 0.90);
+  const tarifaTac = Number((tarifaNeo * 0.8).toFixed(4));
 
   const baseCalculo =
     cliente.base_calculo || existente?.base_calculo || cfg.base_calculo || 'energia_consumida';
@@ -588,6 +581,12 @@ export function inicializarDadosSeed() {
     for (const cli of INITIAL_CLIENTS) {
       salvarCliente(cli);
     }
+  } else {
+    db.exec(`
+      UPDATE clientes
+      SET tarifa_tacticus = ROUND(COALESCE(tarifa_neoenergia, 1.11) * 0.80, 4),
+          tarifa_personalizada = ROUND(COALESCE(tarifa_neoenergia, 1.11) * 0.80, 4)
+    `);
   }
 
   const countHist = db.prepare('SELECT COUNT(*) as c FROM historico_consumo').get().c;
@@ -601,5 +600,7 @@ export function inicializarDadosSeed() {
       assuntoEmail: 'NEOENERGIA PERNAMBUCO | RESPOSTA AO PROTOCOLO 1831774576',
       bandeiraVigencia: 'AMARELA',
     });
+  } else {
+    recalcularPeriodo(null, null);
   }
 }
