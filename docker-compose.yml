@@ -38,11 +38,11 @@ services:
       labels:
         - traefik.enable=true
         - traefik.swarm.network=traefik-net
-        - traefik.http.routers.energia-solar.rule=Host(`solar.tacticus.com.br`) || Host(`energia.tacticus.com.br`) || Host(`solar.renatofeijo.com.br`)
+        - traefik.http.routers.energia-solar.rule=Host(`solar.tacticus.com.br`)
         - traefik.http.routers.energia-solar.entrypoints=websecure
         - traefik.http.routers.energia-solar.tls=true
         - traefik.http.routers.energia-solar.tls.certresolver=letsencrypt
-        - traefik.http.routers.energia-solar-insecure.rule=Host(`solar.tacticus.com.br`) || Host(`energia.tacticus.com.br`) || Host(`solar.renatofeijo.com.br`)
+        - traefik.http.routers.energia-solar-insecure.rule=Host(`solar.tacticus.com.br`)
         - traefik.http.routers.energia-solar-insecure.entrypoints=web
         - traefik.http.routers.energia-solar-insecure.middlewares=energia-solar-https-redirect
         - traefik.http.middlewares.energia-solar-https-redirect.redirectscheme.scheme=https
