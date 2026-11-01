@@ -164,9 +164,9 @@ body {
 
 /* ─── LAYOUT PRINCIPAL E CARDS ──────────────────────────────────────────── */
 .app-main {
-  max-width: 1520px;
+  max-width: 1640px;
   margin: 0 auto;
-  padding: 1.5rem 1.75rem 3rem;
+  padding: 1.25rem 1.35rem 3rem;
 }
 
 .tab-panel {
@@ -293,25 +293,38 @@ table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 thead {
   position: sticky;
   inset-block-start: 0;
-  z-index: 2;
+  z-index: 3;
 }
 
 thead th {
   background: #eff6f1;
   color: #26382e;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-align: left;
-  padding: 0.85rem 0.9rem;
+  padding: 0.65rem 0.68rem;
   border-bottom: 1px solid var(--border-subtle);
+  white-space: normal;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+thead th .th-sub {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: none;
+  letter-spacing: 0;
+  margin-top: 0.14rem;
   white-space: nowrap;
 }
 
@@ -322,7 +335,7 @@ tbody tr:hover th {
 
 tbody th,
 tbody td {
-  padding: 0.8rem 0.9rem;
+  padding: 0.65rem 0.68rem;
   border-bottom: 1px solid #edf3ef;
   vertical-align: middle;
 }
@@ -335,6 +348,23 @@ tbody th {
   text-align: left;
   font-weight: 700;
   border-right: 1px solid #f0f5f2;
+}
+
+#tabelaClientes thead th:last-child,
+#tabelaClientes tbody td:last-child {
+  position: sticky;
+  inset-inline-end: 0;
+  z-index: 2;
+  border-left: 1px solid #edf3ef;
+  white-space: nowrap;
+}
+
+#tabelaClientes tbody td:last-child {
+  background: #ffffff;
+}
+
+#tabelaClientes tbody tr:hover td:last-child {
+  background: #f8fcf9;
 }
 
 #tabelaFaturasMes {

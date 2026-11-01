@@ -876,48 +876,48 @@ async function carregarClientes() {
       return `
       <tr>
         <th scope="row">
-          <div>${esc(c.nome_cliente)}</div>
-          <div style="font-size:0.75rem;color:var(--text-secondary);font-weight:500">
+          <div style="font-size:0.86rem;line-height:1.25">${esc(c.nome_cliente)}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary);font-weight:500;margin-top:0.15rem">
             📍 ${esc(c.localidade || '-')} • 📱 ${esc(c.whatsapp || '-')}
           </div>
         </th>
         <td>
-          <div style="font-family:monospace;font-weight:700">${esc(c.uc)}</div>
-          <div style="font-size:0.74rem;color:var(--text-secondary)">CC: ${esc(c.conta_contrato || '-')}</div>
+          <div style="font-family:monospace;font-weight:700;font-size:0.83rem">${esc(c.uc)}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">CC: ${esc(c.conta_contrato || '-')}</div>
         </td>
-        <td>
+        <td style="white-space:nowrap">
           <div>Atual: <strong>${esc(c.medidor_atual || '-')}</strong></div>
-          ${c.medidor_antigo ? `<div style="font-size:0.74rem;color:var(--text-muted)">Antigo: ${esc(c.medidor_antigo)}</div>` : ''}
+          ${c.medidor_antigo ? `<div style="font-size:0.72rem;color:var(--text-muted)">Antigo: ${esc(c.medidor_antigo)}</div>` : ''}
         </td>
         <td>
           <span class="badge ${c.tipo_unidade === 'GERADORA' ? 'badge-verde' : 'badge-enviada'}">${esc(c.tipo_unidade)} (#${c.prioridade})</span>
         </td>
-        <td>
-          <strong style="color:var(--text-main);font-size:0.94rem">
+        <td style="white-space:nowrap">
+          <strong style="color:var(--text-main);font-size:0.88rem">
             R$ ${tarifaNeo.toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 4 })} / kWh
           </strong>
-          <div style="font-size:0.72rem;color:var(--text-secondary)">
+          <div style="font-size:0.71rem;color:var(--text-secondary)">
             ${
               contas.length > 0
-                ? `Média (${contas.length} conta${contas.length > 1 ? 's' : ''}): ${contas.map(n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })).join(' | ')}`
+                ? `Média (${contas.length}): ${contas.map(n => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })).join(' | ')}`
                 : 'Tarifa direta atribuída'
             }
           </div>
         </td>
-        <td>
-          <strong style="color:var(--solar-primary);font-size:0.94rem">
+        <td style="white-space:nowrap">
+          <strong style="color:var(--solar-primary);font-size:0.88rem">
             R$ ${tarifaSol.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })} / kWh
           </strong>
         </td>
         <td>
-          <div style="font-size:0.78rem;font-weight:700">${esc(c.chave_pix || '50.713.702/0001-74')}</div>
-          <div style="font-size:0.72rem;color:var(--text-secondary)">Base: ${esc(baseLabel)}</div>
+          <div style="font-size:0.76rem;font-weight:700;white-space:nowrap">${esc(c.chave_pix || '50.713.702/0001-74')}</div>
+          <div style="font-size:0.71rem;color:var(--text-secondary);white-space:nowrap">Base: ${esc(baseLabel)}</div>
         </td>
-        <td><strong>${fmtKwh(c.saldo_credito_acumulado)} kWh</strong></td>
+        <td style="white-space:nowrap"><strong>${fmtKwh(c.saldo_credito_acumulado)} kWh</strong></td>
         <td><span class="badge ${c.status_envio === 'ENVIAR' ? 'badge-amarela' : 'badge-paga'}">${esc(c.status_envio)}</span></td>
         <td>
           <button type="button" class="btn btn-primary btn-sm btn-editar-cliente" data-uc="${esc(c.uc)}">
-            💰 Tarifas & Editar
+            ✏️ Editar / Tarifas
           </button>
         </td>
       </tr>
