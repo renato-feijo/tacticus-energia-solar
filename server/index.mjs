@@ -721,7 +721,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, '127.0.0.1', () => {
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
   console.log(`☀️ Tacticus Energia Solar rodando em http://localhost:${PORT}`);
 });
 
