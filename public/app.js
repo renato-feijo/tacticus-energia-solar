@@ -953,19 +953,27 @@ function atualizarMediaContasModal(forcarCalculoSolar = true) {
     inputTarifaTac.value = tarifaSolar20;
   }
 
+  const tSolAtual = Number(inputTarifaTac.value || tarifaSolar20);
+  const pctDesconto =
+    tarifaNeoAtual > 0 ? Math.max(0, ((tarifaNeoAtual - tSolAtual) / tarifaNeoAtual) * 100) : 20;
+  const labelPct = pctDesconto.toLocaleString('pt-BR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  });
+
   const labelNeo = tarifaNeoAtual.toLocaleString('pt-BR', {
     minimumFractionDigits: 3,
     maximumFractionDigits: 4,
   });
-  const labelSol = Number(inputTarifaTac.value || tarifaSolar20).toLocaleString('pt-BR', {
+  const labelSol = tSolAtual.toLocaleString('pt-BR', {
     minimumFractionDigits: 3,
     maximumFractionDigits: 4,
   });
 
   if (validas.length > 0) {
-    badge.textContent = `Média (${validas.length} conta${validas.length > 1 ? 's' : ''}): R$ ${labelNeo}/kWh • Solar (-20%): R$ ${labelSol}/kWh`;
+    badge.textContent = `Média (${validas.length} conta${validas.length > 1 ? 's' : ''}): R$ ${labelNeo}/kWh • Solar (-${labelPct}%): R$ ${labelSol}/kWh`;
   } else {
-    badge.textContent = `Neoenergia: R$ ${labelNeo}/kWh • Solar (-20%): R$ ${labelSol}/kWh`;
+    badge.textContent = `Neoenergia: R$ ${labelNeo}/kWh • Solar (-${labelPct}%): R$ ${labelSol}/kWh`;
   }
 }
 
@@ -989,8 +997,10 @@ function abrirModalCliente(cli = null) {
   document.getElementById('cliTarifaConta2').value = cli?.tarifa_conta_2 ?? '';
   document.getElementById('cliTarifaConta3').value = cli?.tarifa_conta_3 ?? '';
   const tNeoInicial = Number(cli?.tarifa_neoenergia ?? cfg.tarifa_neoenergia ?? 1.11);
+  const tSolSalva = Number(cli?.tarifa_tacticus ?? cli?.tarifa_personalizada ?? 0);
   document.getElementById('cliTarifaNeoenergia').value = tNeoInicial;
-  document.getElementById('cliTarifaTacticus').value = Number((tNeoInicial * 0.8).toFixed(4));
+  document.getElementById('cliTarifaTacticus').value =
+    tSolSalva > 0 ? tSolSalva : Number((tNeoInicial * 0.8).toFixed(4));
   document.getElementById('cliBaseCalculo').value =
     cli?.base_calculo || cfg.base_calculo || 'energia_consumida';
   document.getElementById('cliChavePix').value =
@@ -998,7 +1008,7 @@ function abrirModalCliente(cli = null) {
   document.getElementById('cliTelefoneContato').value =
     cli?.telefone_contato || cfg.telefone_contato || '(81) 9 8250-5444';
 
-  atualizarMediaContasModal(true);
+  atualizarMediaContasModal(false);
   document.getElementById('dialogCliente').showModal();
 }
 
@@ -1197,6 +1207,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (Number.isFinite(tNeo) && tNeo > 0) {
       document.getElementById('cliTarifaTacticus').value = Number((tNeo * 0.8).toFixed(4));
     }
+    atualizarMediaContasModal(false);
+  });
+  document.getElementById('cliTarifaTacticus').addEventListener('input', () => {
     atualizarMediaContasModal(false);
   });
   document.getElementById('formCliente').addEventListener('submit', async e => {

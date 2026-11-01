@@ -198,7 +198,10 @@ export function obterRegrasCalculoCliente(cli = {}, configs = null) {
     tarifaNeo = Number(cfg.tarifa_neoenergia || 1.11);
   }
 
-  const tarifaTac = Number((tarifaNeo * 0.8).toFixed(4));
+  const tarifaTac =
+    toNullableFloat(cli?.tarifa_tacticus) ??
+    toNullableFloat(cli?.tarifa_personalizada) ??
+    Number((tarifaNeo * 0.8).toFixed(4));
 
   const baseCalculo = cli?.base_calculo || cfg.base_calculo || 'energia_consumida';
   const chavePix = String(cli?.chave_pix || cfg.chave_pix || 'contato@renatofeijo.com.br').trim();
@@ -254,7 +257,10 @@ export function salvarCliente(cliente) {
     tarifaNeo = existente?.tarifa_neoenergia ?? Number(cfg.tarifa_neoenergia || 1.11);
   }
 
-  const tarifaTac = Number((tarifaNeo * 0.8).toFixed(4));
+  const tarifaTac =
+    toNullableFloat(cliente?.tarifa_tacticus) ??
+    toNullableFloat(cliente?.tarifa_personalizada) ??
+    Number((tarifaNeo * 0.8).toFixed(4));
 
   const baseCalculo =
     cliente.base_calculo || existente?.base_calculo || cfg.base_calculo || 'energia_consumida';
@@ -586,6 +592,7 @@ export function inicializarDadosSeed() {
       UPDATE clientes
       SET tarifa_tacticus = ROUND(COALESCE(tarifa_neoenergia, 1.11) * 0.80, 4),
           tarifa_personalizada = ROUND(COALESCE(tarifa_neoenergia, 1.11) * 0.80, 4)
+      WHERE tarifa_tacticus IS NULL OR ABS(tarifa_tacticus - 0.90) < 0.0001
     `);
   }
 
