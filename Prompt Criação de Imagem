@@ -1,0 +1,58 @@
+Crie um **card horizontal retangular** com cantos arredondados (bordas: **8px**). **Tamanho sugerido:** 1200×600 px (proporção 2:1). Fundo branco; layout com boa hierarquia visual e espaçamento consistente e em hipótese alguma exiba os valores de distâncias em pixels dos itens do card.
+
+**Cabeçalho (faixa superior):**
+- Faixa horizontal no topo com **altura 90 px**, cor **verde escuro** `#0B6B3A`.
+- Background da faixa: textura sutil de nuvens (opacidade baixa).
+- Texto central/esquerda na faixa: **Economia de Energia Solar** em branco, fonte **sans-serif moderna**, peso **700**, tamanho **28–32 px**.
+- Inserir **logo TACTICUS** (arquivo em anexo) no **canto superior esquerdo**, com margem 16 px do topo e da esquerda; altura do logo ~56 px; manter proporção.
+- No **canto superior direito**, em destaque: **Período: {{ $json.Periodo }}** em branco, alinhado à direita, tamanho 16–18 px, sem negrito.
+
+**Informações do cliente (linha abaixo do cabeçalho):**
+- Ícone check verde à esquerda seguido por duas linhas:
+  - **Cliente:** **{{ $json.Nome_Cliente }}**
+  - **Local:** **{{ $json.Localidade }}**
+- Fonte sans-serif, cor texto `#333333`, tamanho 16 px; ícones verdes `#2ECC71`.
+
+**Seção de comparação (centro, dois boxes lado a lado):**
+- Container com dois boxes separados por **seta direcional verde escuro** apontando da esquerda para a direita.
+- **Espaçamento entre boxes:** 24 px.
+
+**Box esquerdo — CONSUMO DESTE MÊS**
+- Título superior: **CONSUMO DESTE MÊS** (maiúsculas), cor do texto `#0B6B3A`, tamanho 14–16 px.
+- Valor principal grande: **{{ $json.Consumo_kWh }} kWh** em negrito, tamanho 36–40 px.
+- Linha técnica menor: **NEOENERGIA | CONSUMO EM kWh** em cinza `#777777`, tamanho 14 px.
+- Fundo do box: branco com borda sutil cinza `#E6E6E6`, padding 20 px, border-radius 8 px.
+
+**Seta direcional**
+- Ícone seta grande entre os boxes, cor **verde escuro** `#0B6B3A`, apontando para a direita.
+
+**Box direito — VALOR NEOENERGIA**
+- Título: **VALOR NEOENERGIA** (fundo do título em **azul escuro** `#0A3A66`, texto branco).
+- Valor principal: **R$ {{ $json.Valor_Calculado }}** em negrito, tamanho 36–40 px.
+- Linha técnica: **NEOENERGIA | BANDEIRA ATUAL:** em CINZA '#A9A9A9' **AMARELA** em AMARELO `#FFED29`, tamanho 14 px.
+- Fundo do box: branco com borda sutil; padding 20 px; border-radius 8 px.
+
+**Seção central abaixo (box centralizado) — COM ENERGIA SOLAR**
+- Box centralizado com destaque visual (largura ~70% do card).
+- Título em faixa verde `#2E8B57`: **VALOR COM ENERGIA SOLAR** com ícone de sol à esquerda; texto branco, negrito, tamanho 18–20 px.
+- Valor principal: **R$ {{ $json.Valor_Com_Desconto }}** em negrito, tamanho 40–44 px, cor `#0B6B3A`.
+- **Economia neste mês:** calcular e exibir **R$ {{ $json.Valor_Calculado - $json.Valor_Com_Desconto }}** (valor positivo; formato com duas casas decimais e separador de milhares). Texto menor que o valor principal, cor `#2E8B57`, tamanho 16–18 px.
+- Nota: se o sistema não permitir cálculo inline, incluir instrução: **Calcule economia = Valor_Calculado - Valor_Com_Desconto**
+- Exibir seguinte nota abaixo do Box alinhado a esqueda "**OBS:** Bandeira Tarifária AMARELA para o mês de maio de 2026. Isso implica um custo adicional de R$ 1,885 a cada 100 kWh consumidos."
+
+**Rodapé**
+- Faixa inferior em **verde escuro** `#0B6B3A`, altura 70 px.
+- À esquerda: **Texto CTA:** *Realize seu PIX através do e-mail* em branco, tamanho 14–16 px.
+- Ao centro/esquerda: ícone PIX seguido do texto **contato@renatofeijo.com.br** em branco.
+- À direita: ícone WhatsApp e texto **(81) 99950.3231** em branco.
+- Espaçamento e alinhamento responsivos; ícones com tamanho ~20–24 px.
+
+**Estilo visual**
+- **Paleta:** verde escuro `#0B6B3A`, verde claro `#2E8B57`, azul escuro `#0A3A66`, cinza `#777777`, branco `#FFFFFF`.
+- **Tipografia:** Sans-serif moderna (ex.: Inter, Poppins, Roboto); valores em **negrito**.
+- **Ícones:** checkmarks verdes, ícone de sol, ícone WhatsApp, ícone PIX.
+- **Acessibilidade:** contraste suficiente; textos importantes com tamanho mínimo 14 px; alt text para logo: `"Logo TACTICUS"`.
+
+**Variáveis e formatação**
+- Use os placeholders exatamente como: `{{ $json.Periodo }}`, `{{ $json.Nome_Cliente }}`, `{{ $json.Localidade }}`, `{{ $json.Consumo_kWh }}`, `{{ $json.Valor_Calculado }}`, `{{ $json.Valor_Com_Desconto }}`.
+- Formatar valores monetários com `R$ `, separador de milhares `.` e decimais `,` (ex.: `R$ 1.234,56`).

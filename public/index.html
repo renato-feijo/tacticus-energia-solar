@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tacticus Energia Solar — Importação Gmail Neoenergia, Histórico &amp; Faturamento</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand-area">
+      <div class="brand-badge" aria-hidden="true">☀️</div>
+      <div>
+        <h1 class="app-title">Tacticus Energy Solutions</h1>
+        <p class="app-subtitle">Importação Neoenergia (Gmail/PDF) • Histórico de Microgeração • Faturamento &amp; WhatsApp</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="control-pill">
+        <label for="selectPeriodoGlobal">Período de Referência</label>
+        <select id="selectPeriodoGlobal" aria-label="Selecionar Período de Referência"></select>
+      </div>
+
+      <div class="control-pill">
+        <label for="selectBandeiraGlobal">Bandeira do Período</label>
+        <select id="selectBandeiraGlobal" aria-label="Bandeira Tarifária do Período">
+          <option value="VERDE">🟢 VERDE (R$ 0,00)</option>
+          <option value="AMARELA">🟡 AMARELA (R$ 1,885/100kWh)</option>
+          <option value="VERMELHA">🔴 VERMELHA (R$ 4,463/100kWh)</option>
+        </select>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="btnAbrirImportacaoRapida">
+        📥 Importar Resumo Neoenergia
+      </button>
+    </div>
+  </header>
+
+  <nav class="app-tabs" aria-label="Navegação principal">
+    <button type="button" class="tab-btn active" data-tab="faturamento">
+      ⚡ Faturamento &amp; Cards do Mês
+    </button>
+    <button type="button" class="tab-btn" data-tab="historico">
+      📊 Histórico de Consumo (14 Meses)
+    </button>
+    <button type="button" class="tab-btn" data-tab="importacao">
+      📧 Importar do Gmail / PDF
+    </button>
+    <button type="button" class="tab-btn" data-tab="clientes">
+      👥 Clientes &amp; Unidades (UCs)
+    </button>
+    <button type="button" class="tab-btn" data-tab="configuracoes">
+      ⚙️ Tarifas &amp; Integrações
+    </button>
+  </nav>
+
+  <main class="app-main">
+    <!-- ─── ABA 1: FATURAMENTO DO MÊS & DASHBOARD ────────────────────────── -->
+    <section id="tab-faturamento" class="tab-panel active">
+      <div class="kpi-grid" id="kpiGridDashboard"></div>
+
+      <div class="dashboard-split">
+        <article class="card-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Evolução Mensal: Geração Injetada vs. Consumo das UCs (kWh)</h2>
+              <p class="panel-subtitle">Histórico consolidado extraído do resumo de Faturamento Microgeração da Neoenergia</p>
+            </div>
+            <div class="chart-legend">
+              <span class="legend-item"><i class="dot dot-injected"></i> Energia Injetada (Geradora)</span>
+              <span class="legend-item"><i class="dot dot-consumed"></i> Energia Consumida (Todas UCs)</span>
+            </div>
+          </div>
+          <div id="chartEvolucaoGeral" class="svg-chart-container"></div>
+        </article>
+
+        <article class="card-panel usina-summary-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Balanço de Créditos GD (Neoenergia)</h2>
+              <p class="panel-subtitle" id="usinaTitularLabel">Titular da Usina</p>
+            </div>
+          </div>
+          <div id="usinaSaldosBox" class="usina-saldos-box"></div>
+        </article>
+      </div>
+
+      <article class="card-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Faturamento por Cliente no Ciclo Selecionado (<span id="tituloCicloAtual">-</span>)</h2>
+            <p class="panel-subtitle">Gere o Card 1200×600 ou a Fatura Detalhada com Gráfico de Histórico e envie pelo WhatsApp</p>
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="btn btn-secondary" id="btnMarcarTodosEnviar">
+              🔄 Marcar Todos "ENVIAR"
+            </button>
+            <button type="button" class="btn btn-success" id="btnDispararLoteWhatsApp">
+              📲 Disparar Fila WhatsApp (Status = ENVIAR)
+            </button>
+          </div>
+        </div>
+
+        <!-- Fila de envio em lote (visível durante disparo) -->
+        <div id="batchQueueBanner" class="batch-queue-banner" hidden>
+          <div class="batch-queue-info">
+            <strong id="batchQueueStatusText">Preparando fila de envio...</strong>
+            <span id="batchQueueDetailText">Intervalo anti-bloqueio ativo (23–37s por cliente)</span>
+          </div>
+          <button type="button" class="btn btn-danger btn-sm" id="btnCancelarFilaWhatsApp">Cancelar Fila</button>
+        </div>
+
+        <div tabindex="0" role="region" aria-labelledby="faturas-table-caption" class="table-wrapper">
+          <table class="data-table" id="tabelaFaturasMes">
+            <caption id="faturas-table-caption" class="sr-only">Faturamento mensal de energia solar por cliente e unidade consumidora</caption>
+            <thead>
+              <tr>
+                <th>Cliente / Localidade</th>
+                <th>UC / Medidor</th>
+                <th>Leitura (De → Até)</th>
+                <th>Consumo / Compensado</th>
+                <th>Valor Neoenergia</th>
+                <th>Valor Solar (Tacticus)</th>
+                <th>Economia Mês</th>
+                <th>Status</th>
+                <th>Fatura / Card / WhatsApp</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyFaturasMes"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── ABA 2: HISTÓRICO DE CONSUMO COMPLETO ─────────────────────────── -->
+    <section id="tab-historico" class="tab-panel" hidden>
+      <article class="card-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Análise de Histórico por Unidade Consumidora</h2>
+            <p class="panel-subtitle">Consulte todos os meses importados da Neoenergia, evolução de consumo, leituras e economia acumulada</p>
+          </div>
+          <div class="panel-actions">
+            <select id="filtroHistoricoUC" class="input-select" aria-label="Filtrar por Unidade Consumidora">
+              <option value="">Todas as Unidades Consumidoras (UCs)</option>
+            </select>
+            <a href="/api/exportar/csv" class="btn btn-secondary" download>
+              📊 Exportar Histórico CSV / Excel
+            </a>
+          </div>
+        </div>
+
+        <div id="graficoHistoricoClienteWrap" class="cliente-chart-box"></div>
+
+        <div tabindex="0" role="region" aria-labelledby="historico-table-caption" class="table-wrapper">
+          <table class="data-table" id="tabelaHistoricoCompleto">
+            <caption id="historico-table-caption" class="sr-only">Histórico detalhado de consumo, geração injetada e valores faturados</caption>
+            <thead>
+              <tr>
+                <th>Período / Cliente</th>
+                <th>UC / Medidor</th>
+                <th>Leitura (De → Até)</th>
+                <th>Energia Consumida</th>
+                <th>Energia Injetada</th>
+                <th>kWh Compensado</th>
+                <th>Bandeira</th>
+                <th>Valor Solar</th>
+                <th>Economia</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHistoricoCompleto"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── ABA 3: IMPORTAÇÃO DO GMAIL E UPLOAD PDF ──────────────────────── -->
+    <section id="tab-importacao" class="tab-panel" hidden>
+      <div class="import-grid">
+        <!-- Coluna 1: Busca no Gmail -->
+        <article class="card-panel">
+          <div class="panel-header">
+            <div>
+              <h2>📧 Importar Direto do Gmail (Neoenergia)</h2>
+              <p class="panel-subtitle">Busca automática por e-mails da Neoenergia com anexo PDF de Faturamento Microgeração</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="btnBuscarEmailsGmail">
+              🔍 Buscar E-mails no Gmail
+            </button>
+          </div>
+
+          <div class="field-group">
+            <label for="inputGmailQuery">Filtro de Pesquisa do Gmail (Query / Label)</label>
+            <span id="gmail-query-hint" class="hint">Ex: label:Label_26 OR from:atendimentoclientesgd.pe@neoenergia.com</span>
+            <div class="inline-input-row">
+              <input
+                type="text"
+                id="inputGmailQuery"
+                aria-describedby="gmail-query-hint"
+                value="from:neoenergia.com OR subject:&quot;NEOENERGIA PERNAMBUCO&quot; OR label:Label_26"
+              />
+              <button type="button" class="btn btn-success" id="btnImportarUltimoEmailGmail">
+                ⚡ Importar Mais Recente
+              </button>
+            </div>
+          </div>
+
+          <div id="listaEmailsGmailContainer" class="gmail-list-container">
+            <p class="muted-state">
+              Clique em <strong>Buscar E-mails no Gmail</strong> para listar os protocolos recebidos da Neoenergia ou use o upload de PDF ao lado.
+            </p>
+          </div>
+        </article>
+
+        <!-- Coluna 2: Upload Manual de PDF ou Texto -->
+        <article class="card-panel">
+          <div class="panel-header">
+            <div>
+              <h2>📄 Upload Manual do PDF da Neoenergia</h2>
+              <p class="panel-subtitle">Selecione o PDF "Faturamento Microgeração" baixado do e-mail ou cole o texto extraído</p>
+            </div>
+          </div>
+
+          <div class="upload-dropzone" id="pdfDropzone">
+            <input type="file" id="inputPdfFile" accept="application/pdf,.pdf" hidden />
+            <div class="dropzone-icon" aria-hidden="true">📑</div>
+            <h3>Arraste o PDF do Resumo Neoenergia aqui</h3>
+            <p>Extrai automaticamente Injetado, Consumo por Medidor/UC, Leituras, Saldos de Crédito e Tabela de 13 Meses</p>
+            <button type="button" class="btn btn-primary" id="btnSelecionarArquivoPdf">
+              Escolher Arquivo PDF
+            </button>
+            <div id="arquivoPdfSelecionadoInfo" class="selected-file-pill" hidden></div>
+          </div>
+
+          <details class="manual-text-details">
+            <summary>Ou colar texto bruto extraído do relatório (Opcional)</summary>
+            <div class="field-group">
+              <label for="textareaTextoRelatorio">Texto do Relatório Faturamento Microgeração</label>
+              <textarea id="textareaTextoRelatorio" rows="5" placeholder="Cole aqui o texto do PDF caso deseje testar ou importar via texto..."></textarea>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnImportarTextoManual">
+                Processar Texto Colado
+              </button>
+            </div>
+          </details>
+
+          <div id="resultadoImportacaoBox" class="import-result-box" hidden></div>
+        </article>
+      </div>
+
+      <article class="card-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Histórico de Importações Realizadas</h2>
+            <p class="panel-subtitle">Registro auditável de todos os arquivos e e-mails processados</p>
+          </div>
+        </div>
+        <div tabindex="0" role="region" aria-labelledby="importacoes-table-caption" class="table-wrapper">
+          <table class="data-table">
+            <caption id="importacoes-table-caption" class="sr-only">Registro de importações de relatórios da Neoenergia</caption>
+            <thead>
+              <tr>
+                <th>ID / Origem</th>
+                <th>Arquivo / Assunto do E-mail</th>
+                <th>Período do Relatório</th>
+                <th>Injetado / Compensado</th>
+                <th>Saldo Acumulado</th>
+                <th>Registros (Novos / Atualiz.)</th>
+                <th>Data Importação</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyImportacoes"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── ABA 4: CLIENTES & UNIDADES CONSUMIDORAS ──────────────────────── -->
+    <section id="tab-clientes" class="tab-panel" hidden>
+      <article class="card-panel">
+        <div class="panel-header">
+          <div>
+            <h2>Cadastro de Clientes &amp; Unidades Consumidoras (GD)</h2>
+            <p class="panel-subtitle">Gerencie o vínculo entre UC, Medidor, Prioridade de Compensação, WhatsApp e Planilha Google Sheets</p>
+          </div>
+          <div class="panel-actions">
+            <button type="button" class="btn btn-secondary" id="btnSincronizarSheets">
+              🔄 Sincronizar com Google Sheets
+            </button>
+            <button type="button" class="btn btn-primary" id="btnNovoCliente">
+              ➕ Novo Cliente / UC
+            </button>
+          </div>
+        </div>
+
+        <div tabindex="0" role="region" aria-labelledby="clientes-table-caption" class="table-wrapper">
+          <table class="data-table" id="tabelaClientes">
+            <caption id="clientes-table-caption" class="sr-only">Cadastro de clientes e unidades consumidoras de energia solar</caption>
+            <thead>
+              <tr>
+                <th>Cliente / Localidade</th>
+                <th>UC / Conta Contrato</th>
+                <th>Medidor Atual / Antigo</th>
+                <th>Prioridade / Tipo</th>
+                <th>Tarifa Neoenergia (Média 3 Contas)</th>
+                <th>Tarifa Solar</th>
+                <th>PIX &amp; Regra Base</th>
+                <th>Saldo Crédito UC</th>
+                <th>Status Envio</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyClientes"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── ABA 5: CONFIGURAÇÕES & INTEGRAÇÕES ───────────────────────────── -->
+    <section id="tab-configuracoes" class="tab-panel" hidden>
+      <form id="formConfiguracoes" class="settings-grid" novalidate>
+        <article class="card-panel">
+          <div class="panel-header">
+            <div>
+              <h2>🚩 Bandeiras Tarifárias (ANEEL) &amp; Padrões para Novos Clientes</h2>
+              <p class="panel-subtitle">As tarifas Neoenergia/Solar, regra de cálculo e PIX são individuais por cliente (edite em cada cliente). Abaixo ficam os adicionais das bandeiras e os valores padrão para novos cadastros.</p>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgTarifaNeoenergia">Tarifa Neoenergia (R$ / kWh)</label>
+              <span id="hint-tarifa-neo" class="hint">Valor cobrado pela distribuidora (ex: 1.11)</span>
+              <input type="number" step="0.001" min="0.01" id="cfgTarifaNeoenergia" name="tarifa_neoenergia" required aria-describedby="hint-tarifa-neo" />
+              <div class="error-msg"><span aria-hidden="true">❌</span> Informe uma tarifa válida maior que zero.</div>
+            </div>
+
+            <div class="field-group">
+              <label for="cfgTarifaTacticus">Tarifa Solar Tacticus (R$ / kWh)</label>
+              <span id="hint-tarifa-tac" class="hint">Valor com desconto solar (ex: 0.90)</span>
+              <input type="number" step="0.001" min="0.01" id="cfgTarifaTacticus" name="tarifa_tacticus" required aria-describedby="hint-tarifa-tac" />
+              <div class="error-msg"><span aria-hidden="true">❌</span> Informe uma tarifa solar válida.</div>
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="field-group">
+              <label for="cfgAdicionalVerde">Bandeira Verde (R$/100kWh)</label>
+              <input type="number" step="0.001" min="0" id="cfgAdicionalVerde" name="adicional_verde" required />
+            </div>
+            <div class="field-group">
+              <label for="cfgAdicionalAmarela">Bandeira Amarela (R$/100kWh)</label>
+              <input type="number" step="0.001" min="0" id="cfgAdicionalAmarela" name="adicional_amarela" required />
+            </div>
+            <div class="field-group">
+              <label for="cfgAdicionalVermelha">Bandeira Vermelha (R$/100kWh)</label>
+              <input type="number" step="0.001" min="0" id="cfgAdicionalVermelha" name="adicional_vermelha" required />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="cfgBaseCalculo">Métrica Base para Cobrança Mensal</label>
+            <span id="hint-base-calc" class="hint">Define se a cobrança usa a Energia Consumida da rede ou o kWh Compensado</span>
+            <select id="cfgBaseCalculo" name="base_calculo" aria-describedby="hint-base-calc">
+              <option value="energia_consumida">Energia Consumida no Período (Padrão Atual do Card)</option>
+              <option value="kwh_compensado">kWh Efetivamente Compensado pelos Créditos Solares</option>
+            </select>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgChavePix">Chave PIX no Rodapé da Fatura</label>
+              <span id="hint-pix" class="hint">Formato de e-mail, CNPJ, CPF ou telefone exibido no card</span>
+              <input type="email" id="cfgChavePix" name="chave_pix" required autocomplete="email" aria-describedby="hint-pix" aria-errormessage="err-pix" />
+              <div id="err-pix" class="error-msg"><span aria-hidden="true">❌</span> Informe um e-mail/chave PIX válido.</div>
+            </div>
+
+            <div class="field-group">
+              <label for="cfgTelefoneContato">Telefone / WhatsApp no Rodapé</label>
+              <span id="hint-tel" class="hint">Ex: (81) 99950-3231</span>
+              <input type="text" id="cfgTelefoneContato" name="telefone_contato" required aria-describedby="hint-tel" />
+            </div>
+          </div>
+        </article>
+
+        <article class="card-panel">
+          <div class="panel-header">
+            <div>
+              <h2>🔗 Integrações: Gmail OAuth2, Google Sheets &amp; Evolution API</h2>
+              <p class="panel-subtitle">Credenciais para busca automática do e-mail Neoenergia e disparo no WhatsApp</p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnConectarGoogleOAuth">
+              🔐 Autorizar Conta Google (OAuth2)
+            </button>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgGmailClientId">Google OAuth Client ID</label>
+              <input type="text" id="cfgGmailClientId" name="gmail_client_id" placeholder="Ex: 123456-abc.apps.googleusercontent.com" />
+            </div>
+            <div class="field-group">
+              <label for="cfgGmailClientSecret">Google OAuth Client Secret</label>
+              <input type="password" id="cfgGmailClientSecret" name="gmail_client_secret" placeholder="GOCSPX-..." />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgGmailRefreshToken">Google OAuth Refresh Token</label>
+              <input type="password" id="cfgGmailRefreshToken" name="gmail_refresh_token" placeholder="1//04..." />
+            </div>
+            <div class="field-group">
+              <label for="cfgGmailAccessToken">Google OAuth Access Token (Direto)</label>
+              <input type="password" id="cfgGmailAccessToken" name="gmail_access_token" placeholder="ya29.a0..." />
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label for="cfgSheetsId">ID da Planilha Google Sheets (Clientes_Energia_Solar)</label>
+            <input type="text" id="cfgSheetsId" name="sheets_spreadsheet_id" />
+          </div>
+
+          <hr class="divider" />
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgEvolutionUrl">URL da Evolution API</label>
+              <input type="url" id="cfgEvolutionUrl" name="evolution_api_url" required />
+            </div>
+            <div class="field-group">
+              <label for="cfgEvolutionInstance">Instância Evolution API</label>
+              <input type="text" id="cfgEvolutionInstance" name="evolution_instance" required />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group">
+              <label for="cfgEvolutionKey">API Key da Evolution API</label>
+              <input type="password" id="cfgEvolutionKey" name="evolution_api_key" required />
+            </div>
+            <div class="field-group">
+              <label for="cfgWhatsappCaption">Legenda do Envio no WhatsApp</label>
+              <input type="text" id="cfgWhatsappCaption" name="whatsapp_caption" required />
+            </div>
+          </div>
+
+          <div class="form-actions-bar">
+            <button type="submit" class="btn btn-primary">
+              💾 Salvar Configurações e Recalcular Faturas
+            </button>
+          </div>
+        </article>
+      </form>
+    </section>
+  </main>
+
+  <!-- ─── MODAL: VISUALIZAR CARD / FATURA DETALHADA ────────────────────── -->
+  <dialog id="dialogPreviewFatura" closedby="any" aria-labelledby="dialogPreviewTitle" class="modal-dialog modal-xl">
+    <div class="modal-header">
+      <div>
+        <h2 id="dialogPreviewTitle">Visualização da Fatura / Card de Energia Solar</h2>
+        <p id="dialogPreviewSubtitle" class="modal-subtitle">Escolha entre o Card 1200×600 ou o Demonstrativo Completo com Gráfico de Histórico</p>
+      </div>
+      <div class="modal-header-actions">
+        <div class="segmented-switch" role="group" aria-label="Tipo de visualização">
+          <button type="button" class="seg-btn active" id="btnModoCard" data-modo="card">
+            🖼️ Card Compacto (1200×600)
+          </button>
+          <button type="button" class="seg-btn" id="btnModoDetalhada" data-modo="detalhada">
+            📄 Fatura c/ Histórico (1200×1360)
+          </button>
+        </div>
+        <button type="button" class="btn-icon-close" id="btnFecharPreview" aria-label="Fechar modal">✕</button>
+      </div>
+    </div>
+
+    <div class="modal-body preview-stage">
+      <div id="previewSvgWrapper" class="preview-svg-wrapper"></div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="download-group">
+        <a id="linkDownloadPng" href="#" class="btn btn-primary" download>⬇️ Baixar Imagem PNG</a>
+        <a id="linkDownloadPdf" href="#" class="btn btn-secondary" download>📑 Baixar Fatura PDF</a>
+        <a id="linkDownloadSvg" href="#" class="btn btn-secondary" download>🎨 Baixar Vetor SVG</a>
+      </div>
+      <div class="send-group">
+        <button type="button" class="btn btn-success" id="btnEnviarPreviewWhatsApp">
+          📲 Enviar Agora por WhatsApp
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ─── MODAL: CADASTRO / EDIÇÃO DE CLIENTE E REGRAS DE CÁLCULO/PIX ──── -->
+  <dialog id="dialogCliente" closedby="any" aria-labelledby="dialogClienteTitle" class="modal-dialog modal-lg">
+    <form id="formCliente" novalidate>
+      <div class="modal-header">
+        <div>
+          <h2 id="dialogClienteTitle">Cliente, Regras de Cálculo, Tarifas (Média 3 Contas) &amp; PIX</h2>
+          <p class="modal-subtitle">Configure os dados cadastrais e a Tarifa Neoenergia individual baseada na média das últimas 3 contas</p>
+        </div>
+        <button type="button" class="btn-icon-close" id="btnFecharDialogCliente" aria-label="Fechar modal">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="cliNome">Nome Completo do Cliente</label>
+            <span id="hint-cli-nome" class="hint">Nome exibido no Card e na Fatura</span>
+            <input type="text" id="cliNome" name="nome_cliente" required aria-describedby="hint-cli-nome" aria-errormessage="err-cli-nome" />
+            <div id="err-cli-nome" class="error-msg"><span aria-hidden="true">❌</span> Informe o nome do cliente.</div>
+          </div>
+
+          <div class="field-group">
+            <label for="cliUC">Unidade Consumidora (UC Neoenergia)</label>
+            <span id="hint-cli-uc" class="hint">Código numérico da UC (ex: 000306074501465)</span>
+            <input type="text" id="cliUC" name="uc" required pattern="\d{8,15}" aria-describedby="hint-cli-uc" aria-errormessage="err-cli-uc" />
+            <div id="err-cli-uc" class="error-msg"><span aria-hidden="true">❌</span> A UC deve conter entre 8 e 15 dígitos numéricos.</div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="field-group">
+            <label for="cliContaContrato">Conta Contrato</label>
+            <input type="text" id="cliContaContrato" name="conta_contrato" placeholder="Ex: 4011882060" />
+          </div>
+          <div class="field-group">
+            <label for="cliPrioridade">Ordem de Prioridade</label>
+            <input type="number" id="cliPrioridade" name="prioridade" min="0" max="99" value="1" />
+          </div>
+          <div class="field-group">
+            <label for="cliTipoUnidade">Tipo da Unidade</label>
+            <select id="cliTipoUnidade" name="tipo_unidade">
+              <option value="BENEFICIARIA">BENEFICIÁRIA</option>
+              <option value="GERADORA">GERADORA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="field-group">
+            <label for="cliMedidorAtual">Medidor Atual</label>
+            <input type="text" id="cliMedidorAtual" name="medidor_atual" placeholder="Ex: 6251923777" />
+          </div>
+          <div class="field-group">
+            <label for="cliMedidorAntigo">Medidor Antigo (Histórico)</label>
+            <input type="text" id="cliMedidorAntigo" name="medidor_antigo" placeholder="Ex: 3230961394" />
+          </div>
+          <div class="field-group">
+            <label for="cliStatusEnvio">Status na Fila WhatsApp</label>
+            <select id="cliStatusEnvio" name="status_envio">
+              <option value="ENVIAR">ENVIAR</option>
+              <option value="ENVIADO">ENVIADO</option>
+              <option value="PAUSADO">PAUSADO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="field-group">
+            <label for="cliWhatsApp">WhatsApp do Cliente (com DDI 55 + DDD)</label>
+            <span id="hint-cli-whats" class="hint">Formato: 5581988509373 (12 ou 13 dígitos)</span>
+            <input type="tel" id="cliWhatsApp" name="whatsapp" required pattern="\d{10,15}" aria-describedby="hint-cli-whats" aria-errormessage="err-cli-whats" />
+            <div id="err-cli-whats" class="error-msg"><span aria-hidden="true">❌</span> Informe apenas números com DDD (ex: 5581999999999).</div>
+          </div>
+
+          <div class="field-group">
+            <label for="cliLocalidade">Localidade (Bairro - Cidade)</label>
+            <span id="hint-cli-loc" class="hint">Ex: Jardim São Paulo - Recife</span>
+            <input type="text" id="cliLocalidade" name="localidade" required aria-describedby="hint-cli-loc" />
+          </div>
+        </div>
+
+        <!-- ─── BLOCO INDIVIDUAL DE REGRAS DE CÁLCULO, MÉDIA DE 3 CONTAS E PIX ─── -->
+        <div class="client-tariff-box">
+          <div class="client-tariff-header">
+            <div>
+              <h3>💰 Regras de Cálculo, Tarifas (Média das 3 Últimas Contas) &amp; PIX do Cliente</h3>
+              <p>Preencha o valor do kWh nas últimas 3 contas da Neoenergia para calcular automaticamente a média do cliente, ou informe a tarifa diretamente.</p>
+            </div>
+            <span class="badge badge-verde" id="badgeMediaCalculada">Média: R$ 1,110 / kWh</span>
+          </div>
+
+          <div class="form-row-3">
+            <div class="field-group">
+              <label for="cliTarifaConta1">1ª Conta — Valor kWh (R$)</label>
+              <span class="hint">Penúltima/Antepenúltima conta</span>
+              <input type="number" step="0.0001" min="0" id="cliTarifaConta1" name="tarifa_conta_1" placeholder="Ex: 1.095" class="input-media-conta" />
+            </div>
+            <div class="field-group">
+              <label for="cliTarifaConta2">2ª Conta — Valor kWh (R$)</label>
+              <span class="hint">Conta anterior</span>
+              <input type="number" step="0.0001" min="0" id="cliTarifaConta2" name="tarifa_conta_2" placeholder="Ex: 1.112" class="input-media-conta" />
+            </div>
+            <div class="field-group">
+              <label for="cliTarifaConta3">3ª Conta — Valor kWh (R$)</label>
+              <span class="hint">Última conta apurada</span>
+              <input type="number" step="0.0001" min="0" id="cliTarifaConta3" name="tarifa_conta_3" placeholder="Ex: 1.123" class="input-media-conta" />
+            </div>
+          </div>
+
+          <div class="form-row-3">
+            <div class="field-group">
+              <label for="cliTarifaNeoenergia">Tarifa Neoenergia do Cliente (R$/kWh)</label>
+              <span id="hint-cli-tneo" class="hint">Média calculada das 3 contas (ou manual)</span>
+              <input type="number" step="0.0001" min="0.01" id="cliTarifaNeoenergia" name="tarifa_neoenergia" required aria-describedby="hint-cli-tneo" />
+            </div>
+
+            <div class="field-group">
+              <label for="cliTarifaTacticus">Tarifa Solar Tacticus (R$/kWh)</label>
+              <span id="hint-cli-ttac" class="hint">Valor cobrado com desconto solar</span>
+              <input type="number" step="0.0001" min="0.01" id="cliTarifaTacticus" name="tarifa_tacticus" required aria-describedby="hint-cli-ttac" />
+            </div>
+
+            <div class="field-group">
+              <label for="cliBaseCalculo">Métrica Base de Cálculo</label>
+              <span class="hint">Base de cobrança deste cliente</span>
+              <select id="cliBaseCalculo" name="base_calculo">
+                <option value="energia_consumida">Energia Consumida da Rede</option>
+                <option value="kwh_compensado">kWh Compensado Solar</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="field-group" style="margin-bottom:0">
+              <label for="cliChavePix">Chave PIX no Card deste Cliente</label>
+              <span id="hint-cli-pix" class="hint">Exibida no rodapé do Card e da Fatura</span>
+              <input type="text" id="cliChavePix" name="chave_pix" required aria-describedby="hint-cli-pix" />
+            </div>
+
+            <div class="field-group" style="margin-bottom:0">
+              <label for="cliTelefoneContato">Telefone / WhatsApp no Rodapé do Card</label>
+              <span id="hint-cli-tel" class="hint">Exibido no rodapé do Card e da Fatura</span>
+              <input type="text" id="cliTelefoneContato" name="telefone_contato" required aria-describedby="hint-cli-tel" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btnCancelarCliente">Cancelar</button>
+        <button type="submit" class="btn btn-primary">💾 Salvar Cliente e Recalcular Faturas</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Toast de Notificações -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,18 @@
+services:
+  energia-solar:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tacticus-energia-solar
+    restart: unless-stopped
+    ports:
+      - "3456:3456"
+    environment:
+      - NODE_ENV=production
+      - PORT=3456
+      - TZ=America/Recife
+    volumes:
+      - energia_solar_data:/app/data
+
+volumes:
+  energia_solar_data:

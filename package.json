@@ -1,0 +1,14 @@
+{
+  "name": "tacticus-energia-solar",
+  "version": "1.0.0",
+  "description": "Aplicação Full-Stack para importação do Resumo Neoenergia (Gmail/PDF), histórico de consumo de microgeração e geração de faturas/cards solares.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node --watch server/index.mjs"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}
+
