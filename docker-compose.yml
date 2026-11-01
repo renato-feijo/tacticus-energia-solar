@@ -1,18 +1,57 @@
+version: "3.8"
+
 services:
   energia-solar:
+    image: tacticus-energia-solar:latest
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tacticus-energia-solar
-    restart: unless-stopped
-    ports:
-      - "3456:3456"
     environment:
       - NODE_ENV=production
       - PORT=3456
       - TZ=America/Recife
     volumes:
       - energia_solar_data:/app/data
+    ports:
+      - target: 3456
+        published: 3456
+        protocol: tcp
+        mode: ingress
+    networks:
+      - traefik-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3456/api/overview').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.hostname == taskflow-01
+      restart_policy:
+        condition: on-failure
+      update_config:
+        order: start-first
+        failure_action: rollback
+      labels:
+        - traefik.enable=true
+        - traefik.swarm.network=traefik-net
+        - traefik.http.routers.energia-solar.rule=Host(`solar.tacticus.com.br`) || Host(`energia.tacticus.com.br`) || Host(`solar.renatofeijo.com.br`)
+        - traefik.http.routers.energia-solar.entrypoints=websecure
+        - traefik.http.routers.energia-solar.tls=true
+        - traefik.http.routers.energia-solar.tls.certresolver=letsencrypt
+        - traefik.http.routers.energia-solar-insecure.rule=Host(`solar.tacticus.com.br`) || Host(`energia.tacticus.com.br`) || Host(`solar.renatofeijo.com.br`)
+        - traefik.http.routers.energia-solar-insecure.entrypoints=web
+        - traefik.http.routers.energia-solar-insecure.middlewares=energia-solar-https-redirect
+        - traefik.http.middlewares.energia-solar-https-redirect.redirectscheme.scheme=https
+        - traefik.http.services.energia-solar.loadbalancer.server.port=3456
 
 volumes:
   energia_solar_data:
+
+networks:
+  traefik-net:
+    external: true
+    name: traefik-net
